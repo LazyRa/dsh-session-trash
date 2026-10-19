@@ -1,6 +1,8 @@
 # Bundle patch layer: the row loads the package's main entry as the host half
 # (a plain Cordis plugin). The `dsh.client` declaration in package.json makes
 # the web app load ./client as the browser half.
+#
+# `name` must match the package name exactly, or the loader cannot resolve it.
 - insert:
     - id: dsh-session-trash
-      name: dsh-session-trash
+      name: "@lazyra/dsh-session-trash"

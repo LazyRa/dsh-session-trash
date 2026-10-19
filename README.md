@@ -74,13 +74,13 @@ DSH 官方只有**归档**（archive）——归档是把会话藏起来，可�
 
 1. 侧栏点击 **插件**
 2. 点击 **添加插件**
-3. 输入 `dsh-session-trash`
+3. 输入 `@lazyra/dsh-session-trash`
 4. 安装 → 启用 → **重启 DSH**
 
 ### 方式二：命令行
 
 ```bash
-dsh plugin --profile desktop add dsh-session-trash
+dsh plugin --profile desktop add @lazyra/dsh-session-trash
 ```
 
 ### 方式三：从源码安装
@@ -140,7 +140,7 @@ dsh plugin --profile desktop add /path/to/dsh-session-trash
 
 ```yaml
 - id: dsh-session-trash
-  name: dsh-session-trash
+  name: "@lazyra/dsh-session-trash"
   config:
     retentionDays: 7          # 会话保留天数，默认 7
     sweepIntervalMs: 21600000 # 自动清理间隔（毫秒），默认 6 小时
