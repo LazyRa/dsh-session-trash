@@ -6,6 +6,7 @@
 
 删错了？7 天内随时找回来。
 
+[![npm](https://img.shields.io/npm/v/@lazyra/dsh-session-trash.svg)](https://www.npmjs.com/package/@lazyra/dsh-session-trash)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![DSH](https://img.shields.io/badge/DeepSeek%20Harness-%E2%89%A50.2.0-blue)](https://github.com/deepseek-ai/deepseek-harness)
 [![Tests](https://img.shields.io/badge/tests-50%20passed-brightgreen)](#测试)
@@ -69,6 +70,8 @@ DSH 官方只有**归档**（archive）——归档是把会话藏起来，可�
 | 🌏 | **中英双语** | 跟随 DSH 语言设置 |
 
 ## 🚀 快速开始
+
+> 已发布到 npm：[`@lazyra/dsh-session-trash`](https://www.npmjs.com/package/@lazyra/dsh-session-trash)
 
 ### 方式一：插件管理器（推荐）
 
