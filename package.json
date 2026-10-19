@@ -33,12 +33,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/REPLACE_WITH_YOUR_USERNAME/dsh-session-trash.git"
+    "url": "git+https://github.com/LazyRa/dsh-session-trash.git"
   },
   "bugs": {
-    "url": "https://github.com/REPLACE_WITH_YOUR_USERNAME/dsh-session-trash/issues"
+    "url": "https://github.com/LazyRa/dsh-session-trash/issues"
   },
-  "homepage": "https://github.com/REPLACE_WITH_YOUR_USERNAME/dsh-session-trash#readme",
+  "homepage": "https://github.com/LazyRa/dsh-session-trash#readme",
   "engines": {
     "node": ">=22.19.0",
     "dsh": ">=0.2.0"

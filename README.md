@@ -25,7 +25,7 @@ dsh plugin --profile desktop add dsh-session-trash
 ### 方式三：从源码
 
 ```bash
-git clone https://github.com/REPLACE_WITH_YOUR_USERNAME/dsh-session-trash.git
+git clone https://github.com/LazyRa/dsh-session-trash.git
 dsh plugin --profile desktop add /path/to/dsh-session-trash
 ```
 
@@ -122,7 +122,7 @@ dsh plugin --profile desktop add /path/to/dsh-session-trash
 ## 开发
 
 ```bash
-git clone https://github.com/REPLACE_WITH_YOUR_USERNAME/dsh-session-trash.git
+git clone https://github.com/LazyRa/dsh-session-trash.git
 cd dsh-session-trash
 npm test
 ```
