@@ -16,6 +16,7 @@
     "lib/trash-service.js",
     "cordis.patch.yml",
     "locale/*.json",
+    "docs/images/*.png",
     "README.md",
     "LICENSE"
   ],

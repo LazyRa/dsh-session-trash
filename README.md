@@ -46,7 +46,17 @@ dsh plugin --profile desktop add /path/to/dsh-session-trash
 
 ## 截图
 
-> 待补充
+**会话行菜单** — 「删除会话」用危险色，带垃圾桶图标，与内置项同规格：
+
+![会话行菜单里的删除会话](docs/images/session-menu.png)
+
+**删除后 6 秒内可撤销** — 顶部提示条，不用去回收站翻：
+
+![删除后的撤销提示](docs/images/undo-toast.png)
+
+**彻底删除确认** — 跟随 DSH 主题的对话框，不是浏览器原生弹窗：
+
+![彻底删除确认对话框](docs/images/confirm-dialog.png)
 
 ## 数据布局
 
