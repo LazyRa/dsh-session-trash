@@ -1,20 +1,81 @@
-# dsh-session-trash · 会话回收站
+<div align="center">
 
-给 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 补上**可恢复的会话删除**。
+# 🗑️ dsh-session-trash
 
-DSH 官方只提供归档（archive），没有删除。这个插件把删除做成安全的：删除不是抹掉，而是移进回收站，随时可以反悔。
+**给 DeepSeek Harness 补上「可恢复的会话删除」**
 
-- **删除即移入回收站** — 会话目录被移动，不是删除
-- **7 天内随时恢复** — 恢复到原工作区、原位置，标题和排序都保留
-- **到期自动清理** — 启动时扫一次，之后每 6 小时一次
-- **删除后 6 秒内可撤销** — 顶部提示条，不用去回收站翻
-- **回收站页面** — 搜索、排序、查看占用大小、单个恢复 / 彻底删除 / 一键清空
+删错了？7 天内随时找回来。
 
-## 安装
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![DSH](https://img.shields.io/badge/DeepSeek%20Harness-%E2%89%A50.2.0-blue)](https://github.com/deepseek-ai/deepseek-harness)
+[![Tests](https://img.shields.io/badge/tests-50%20passed-brightgreen)](#测试)
+[![No Build](https://img.shields.io/badge/build-none-success)](#开发)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/LazyRa/dsh-session-trash/pulls)
+
+[快速开始](#-快速开始) · [功能](#-功能) · [使用](#-使用) · [配置](#-配置) · [工作原理](#-工作原理) · [常见问题](#-常见问题) · [开发](#-开发)
+
+</div>
+
+---
+
+## 为什么需要它
+
+DSH 官方只有**归档**（archive）——归档是把会话藏起来，可以反悔；但**删除**这个动作官方没有提供。
+
+你可能遇到过这些情况：
+
+- 会话列表越堆越长，想清理掉不用的
+- 手滑点错，把还要用的会话处理掉了
+- 想彻底删掉某些内容，却只能归档，数据还占着磁盘
+
+这个插件把「删除」做成安全版本：**不是抹掉，而是移进回收站**。7 天内随时恢复，到期自动清理。
+
+<table>
+<tr><td width="50%">
+
+**❌ 没有它**
+
+```
+会话太多 → 只能归档
+误操作   → 无法挽回
+想清理   → 数据一直占着
+```
+
+</td><td width="50%">
+
+**✅ 有它之后**
+
+```
+会话太多 → 删除，进回收站
+误操作   → 6 秒内点撤销
+想清理   → 彻底删除，释放空间
+```
+
+</td></tr>
+</table>
+
+## ✨ 功能
+
+| | 功能 | 说明 |
+|---|---|---|
+| 🗑️ | **删除即入回收站** | 会话目录被**移动**而非删除，数据零风险 |
+| ↩️ | **6 秒内撤销** | 删除后顶部提示条，一键反悔，不用去回收站翻 |
+| 📅 | **7 天保留期** | 期间随时恢复，到期自动清理（启动时 + 每 6 小时） |
+| 🔍 | **回收站页面** | 搜索标题/路径、按时间/大小/名称排序、显示占用 |
+| 🎯 | **完整恢复** | 回到原工作区、原位置，标题、排序、置顶状态都保留 |
+| ⚡ | **即时刷新** | 接入 DSH 事件链路，删完侧栏立刻消失，不用手动刷新 |
+| ⌨️ | **快捷键** | `Ctrl/Cmd + Shift + Delete` 删除当前会话 |
+| 🛡️ | **运行中保护** | 会话还在跑时先询问，不会悄悄打断工作 |
+| 🌏 | **中英双语** | 跟随 DSH 语言设置 |
+
+## 🚀 快速开始
 
 ### 方式一：插件管理器（推荐）
 
-侧栏 **插件** → **添加插件** → 输入 `dsh-session-trash` → 安装 → 启用 → 重启 DSH。
+1. 侧栏点击 **插件**
+2. 点击 **添加插件**
+3. 输入 `dsh-session-trash`
+4. 安装 → 启用 → **重启 DSH**
 
 ### 方式二：命令行
 
@@ -22,104 +83,188 @@ DSH 官方只提供归档（archive），没有删除。这个插件把删除做
 dsh plugin --profile desktop add dsh-session-trash
 ```
 
-### 方式三：从源码
+### 方式三：从源码安装
 
 ```bash
 git clone https://github.com/LazyRa/dsh-session-trash.git
 dsh plugin --profile desktop add /path/to/dsh-session-trash
 ```
 
-安装后重启 DSH 生效。
+> [!TIP]
+> 安装后需要**重启 DSH** 才会生效。如果侧栏没出现「回收站」，检查插件是否已启用。
 
-## 使用
+## 📖 使用
 
-| 操作 | 位置 |
+### 删除会话
+
+侧栏会话行 → 悬停显示 `⋯` → **删除会话**
+
+<div align="center">
+  <img src="docs/images/session-menu.png" alt="会话行菜单" width="70%">
+</div>
+
+删完立刻可撤销：
+
+<div align="center">
+  <img src="docs/images/undo-toast.png" alt="撤销提示" width="70%">
+</div>
+
+### 管理回收站
+
+侧栏 **回收站** 进入管理页面：
+
+| 操作 | 说明 |
 |---|---|
-| 删除会话 | 侧栏会话行 → `⋯` → **删除会话**（红字带垃圾桶图标） |
-| 撤销删除 | 删除后顶部提示条点 **撤销**（6 秒内） |
-| 查看回收站 | 侧栏 **回收站** |
-| 恢复 | 回收站条目 → **恢复** |
-| 彻底删除 | 回收站条目 → **彻底删除**（不可撤销） |
-| 清空回收站 | 回收站页面右上 → **全部删除** |
+| **恢复** | 会话回到原工作区和原位置 |
+| **彻底删除** | 永久删除，**不可撤销** |
+| **全部删除** | 清空回收站 |
+| **搜索** | 按标题或路径过滤 |
+| **排序** | 按删除时间 / 大小 / 名称 |
+| **刷新** | 手动重新读取（正常情况无需点击） |
 
-**快捷键**：`Ctrl/Cmd + Shift + Delete` 删除当前会话。
+彻底删除有二次确认，使用 DSH 原生对话框样式：
 
-## 截图
+<div align="center">
+  <img src="docs/images/confirm-dialog.png" alt="彻底删除确认" width="70%">
+</div>
 
-**会话行菜单** — 「删除会话」用危险色，带垃圾桶图标，与内置项同规格：
+### 快捷键
 
-![会话行菜单里的删除会话](docs/images/session-menu.png)
+| 快捷键 | 功能 |
+|---|---|
+| `Ctrl/Cmd + Shift + Delete` | 删除当前打开的会话 |
 
-**删除后 6 秒内可撤销** — 顶部提示条，不用去回收站翻：
+## ⚙️ 配置
 
-![删除后的撤销提示](docs/images/undo-toast.png)
-
-**彻底删除确认** — 跟随 DSH 主题的对话框，不是浏览器原生弹窗：
-
-![彻底删除确认对话框](docs/images/confirm-dialog.png)
-
-## 数据布局
-
-```
-<DSH_HOME>/
-├── sessions/<projectKey>/<sessionId>/
-│   └── session.v4.jsonl.zstd          ← 会话原始位置
-└── trash/
-    └── 2026-10-19T09-19-52-123-session-xxxx/
-        ├── meta.json                   ← 原位置、标题、删除时间
-        ├── session.v4.jsonl.zstd       ← 会话本体
-        └── projcache.json              ← 投影缓存（含标题）
-```
-
-`meta.json` 里保存了**编码后的 projectKey**，恢复时直接使用而不重新计算 —— 因为 DSH 的路径编码有损（`D:\a-b\c` 和 `D:\a\b\c` 会编码成同一个 key），重算可能把会话放错工作区。
-
-## 配置
-
-在 profile 的 `cordis.patch.yml` 中给这一行加 `config`：
+在 profile 的 `cordis.patch.yml` 中给插件加 `config`：
 
 ```yaml
 - id: dsh-session-trash
   name: dsh-session-trash
   config:
-    retentionDays: 7          # 保留天数，默认 7
-    sweepIntervalMs: 21600000 # 清理间隔毫秒，默认 6 小时
-    home: null                # DSH home，默认读 $DSH_HOME 或 ~/.dsh
+    retentionDays: 7          # 会话保留天数，默认 7
+    sweepIntervalMs: 21600000 # 自动清理间隔（毫秒），默认 6 小时
+    home: null                # DSH home 路径，默认读 $DSH_HOME 或 ~/.dsh
 ```
 
-## 工作原理
+| 配置项 | 类型 | 默认值 | 说明 |
+|---|---|---|---|
+| `retentionDays` | `number` | `7` | 回收站保留天数，到期后自动彻底删除 |
+| `sweepIntervalMs` | `number` | `21600000` | 过期扫描间隔，60000 毫秒起 |
+| `home` | `string \| null` | `null` | DSH home，留空则自动推断 |
 
-删除时会同步维护三处状态，缺一处就会留下「幽灵会话」：
+## 🔬 工作原理
 
-| 位置 | 处理 |
-|---|---|
-| `sessions/<key>/<id>/` | 移动到 `trash/` |
-| `storages/workspace.json` | 从 `sessionIds` / `archivedSessionIds` / `pinnedSessionIds` 移除 |
-| `storages/session_projcache/sessions/<id>.json` | 一并移入回收站（保留标题） |
+### 数据怎么存
 
-界面的即时刷新依赖 DSH 自己的事件链路：
+```
+<DSH_HOME>/
+├── sessions/
+│   └── <projectKey>/<sessionId>/
+│       └── session.v4.jsonl.zstd        ← 会话原始位置
+│
+└── trash/
+    └── 2026-10-19T09-19-52-123-session-xxxx/
+        ├── meta.json                     ← 原位置、标题、删除时间
+        ├── session.v4.jsonl.zstd         ← 会话本体
+        └── projcache.json                ← 投影缓存（含标题）
+```
 
-- **删除** → 发 `api-session/removed`，客户端立即移除该行
-- **恢复** → 发 `api-session/added`（带完整 summary 与标题投影），客户端立即加回该行
+删除 = 把整个目录 `rename` 到 `trash/`。恢复 = 反向搬回。**没有任何数据被删改**。
 
-**附件不参与回收站**。`attachments/v1/objects/` 是 SHA-256 内容寻址存储，多个会话可能引用同一对象，删除会破坏其他会话的历史。
+### 三处状态必须同步
 
-**运行中的会话**：删除前会探测是否还有工作在跑；若有，先询问是否停止后再删除。
+只移动目录是不够的 —— 不同步注册表就会留下「幽灵会话」：
 
-## HTTP 接口
+| 位置 | 处理 | 不同步的后果 |
+|---|---|---|
+| `sessions/<key>/<id>/` | 移动到 `trash/` | 会话仍出现在侧栏 |
+| `storages/workspace.json` | 从成员/归档/置顶集合移除 | 会话掉进「未分组」 |
+| `storages/session_projcache/` | 一并移入回收站 | 恢复后标题丢失 |
 
-挂在 `/api/dsh-session-trash/` 下，全部为精确路由（POST）：
+### 界面为什么能即时刷新
 
-| 路径 | 说明 |
-|---|---|
-| `list` | 回收站条目、保留天数 |
-| `probe` | 删除前预检：会话是否仍在运行 |
-| `move` | `{ sessionId, title?, stopActivity? }` |
-| `restore` | `{ dir }` |
-| `purge` | `{ dir }` |
-| `purge-all` | 清空回收站 |
-| `sweep` | 立即清理过期条目 |
+不靠轮询，走 DSH 自己的事件链路：
 
-## 开发
+```mermaid
+sequenceDiagram
+    participant UI as 侧栏/面板
+    participant Host as Host 插件
+    participant FS as 文件系统
+
+    UI->>Host: POST /move
+    Host->>FS: rename 到 trash/
+    Host->>FS: 更新 workspace.json
+    Host-->>UI: api-session/removed
+    Note over UI: 该行立即消失
+
+    UI->>Host: POST /restore
+    Host->>FS: rename 回原位
+    Host-->>UI: api-session/added (含标题投影)
+    Note over UI: 该行立即出现，标题正确
+```
+
+### 为什么不能用 `sessions.refresh()`
+
+恢复后如果调客户端 `refresh()` 整体重拉列表，会和 `api-session/removed` 写入的本地移除标记冲突，导致已永久删除的会话被重新捞出来、掉进「未分组」。所以恢复必须发**带完整 summary 的 `api-session/added`**。
+
+### 附件不参与回收站
+
+`attachments/v1/objects/` 是 **SHA-256 内容寻址存储** —— 多个会话可能引用同一个对象。删除会破坏其他会话的历史，所以附件始终保留。
+
+## 🔌 HTTP 接口
+
+挂在 `/api/dsh-session-trash/` 下，全部为**精确路由**（DSH 的 `/api` 只认精确路径，前缀路由会被 404）。
+
+| 方法 | 路径 | 请求体 | 说明 |
+|---|---|---|---|
+| `POST` | `list` | — | 回收站条目 + 保留天数 |
+| `POST` | `probe` | `{ sessionId }` | 预检：会话是否仍在运行 |
+| `POST` | `move` | `{ sessionId, title?, stopActivity? }` | 移入回收站 |
+| `POST` | `restore` | `{ dir }` | 恢复 |
+| `POST` | `purge` | `{ dir }` | 彻底删除单条 |
+| `POST` | `purge-all` | — | 清空回收站 |
+| `POST` | `sweep` | — | 立即清理过期条目 |
+
+## ❓ 常见问题
+
+<details>
+<summary><b>删掉的会话还能找回来吗？</b></summary>
+
+能。7 天内都可以从回收站恢复，也可以点删除后顶部提示条的「撤销」立即恢复。
+</details>
+
+<details>
+<summary><b>7 天后真的会删掉吗？</b></summary>
+
+会。插件在 DSH 启动时扫一次，之后每 6 小时扫一次，把过期条目彻底删除。想保留更久可以调大 `retentionDays`。
+</details>
+
+<details>
+<summary><b>删除会话会影响其他会话吗？</b></summary>
+
+不会。每个会话的目录独立，附件是共享的但不会被删除。
+</details>
+
+<details>
+<summary><b>会话正在运行时点删除会怎样？</b></summary>
+
+会先检测到它在运行，弹出确认框询问是否停止后再删除。不会悄悄打断你的工作。
+</details>
+
+<details>
+<summary><b>升级 DSH 后插件会失效吗？</b></summary>
+
+插件会探测会话日志的实际格式版本（`session.v<N>.jsonl.zstd`），不写死版本号。但如果 DSH 引入全新的存储结构，可能需要更新插件。
+</details>
+
+<details>
+<summary><b>数据存在哪里？可以手动备份吗？</b></summary>
+
+回收站在 `<DSH_HOME>/trash/` 下，每个条目是一个独立目录，直接复制走就行。
+</details>
+
+## 🧑‍💻 开发
 
 ```bash
 git clone https://github.com/LazyRa/dsh-session-trash.git
@@ -127,19 +272,56 @@ cd dsh-session-trash
 npm test
 ```
 
-纯 ESM，无需构建步骤 —— `lib/*.js` 就是直接运行的源码。
+**纯 ESM，零构建** —— `lib/*.js` 就是直接运行的源码，改完重启 DSH 即生效。
 
 ```
-test/service.test.mjs   35 项：路径编码、回收站增删改查、路径穿越防护、格式版本探测
-test/host-e2e.test.mjs  15 项：真实 HTTP 往返，路由按 DSH 源码规则严格校验
+lib/
+├── index.js           Host 半侧：HTTP 路由、生命周期、定时清理
+├── trash-service.js   核心逻辑：编码、移动、恢复、清理
+└── client.js          浏览器半侧：菜单项、横幅、回收站页面
 ```
 
-## 已知限制
+### 测试
 
-- **路径编码有损**：`D:\a-b\c` 与 `D:\a\b\c` 在 DSH 内部共用同一个 `projectKey`，这是 DSH 的既有行为。
-- **会话格式版本**：日志文件名 `session.v<N>.jsonl.zstd` 会随 DSH 升级变化，插件会探测实际版本号，但极新格式的解析可能需要更新。
-- **运行中会话停止**：停止沿用 DSH 的既有语义，被停止的回合不会继续。
+| 文件 | 数量 | 覆盖 |
+|---|---|---|
+| `test/service.test.mjs` | 35 | 路径编码、增删改查、路径穿越防护、格式版本探测 |
+| `test/host-e2e.test.mjs` | 15 | 真实 HTTP 往返，路由按 DSH 源码规则严格校验 |
 
-## 许可
+```bash
+node test/service.test.mjs
+node test/host-e2e.test.mjs
+```
 
-[MIT](LICENSE)
+### 设计取舍
+
+- **不引入构建**：插件接口就是 `{ name, inject, apply }`，手写 ESM 足够，省掉一整条工具链
+- **不碰附件**：内容寻址存储没有引用计数，删除会连带破坏其他会话
+- **复用官方组件**：菜单行、对话框、图标都用 `ui-primitives`，和内置 UI 保持同一套视觉语言
+- **降级可用**：拿不到 `primitives` 时有自绘回退，功能不丢
+
+## ⚠️ 已知限制
+
+- **路径编码有损**：DSH 的 `projectKey` 会把 `D:\a-b\c` 和 `D:\a\b\c` 编码成同一个 key，这是 DSH 的既有行为，插件通过记录原始 key 规避恢复错位
+- **会话格式版本**：会探测实际版本号，但全新存储结构仍需适配
+- **仅桌面端验证**：Web 端理论可用，但未充分测试
+
+## 🤝 贡献
+
+欢迎 Issue 和 PR！
+
+- 发现 Bug → 提 [Issue](https://github.com/LazyRa/dsh-session-trash/issues)，附上 DSH 版本和复现步骤
+- 想加功能 → 先开 Issue 讨论，避免白做
+- 提交代码 → 确保 `npm test` 全绿
+
+## 📄 许可
+
+[MIT](LICENSE) © dsh-session-trash contributors
+
+---
+
+<div align="center">
+
+**如果这个插件帮到了你，给个 ⭐ 就是最好的支持**
+
+</div>
