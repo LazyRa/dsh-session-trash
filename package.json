@@ -1,0 +1,60 @@
+{
+  "name": "dsh-session-trash",
+  "version": "0.1.0",
+  "description": "Recoverable session deletion for DeepSeek Harness: move sessions to a trash folder, restore them from a UI page, and purge automatically after 7 days.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "lib/trash-service.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "cordis",
+    "plugin",
+    "session",
+    "trash",
+    "recycle-bin",
+    "restore"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/REPLACE_WITH_YOUR_USERNAME/dsh-session-trash.git"
+  },
+  "bugs": {
+    "url": "https://github.com/REPLACE_WITH_YOUR_USERNAME/dsh-session-trash/issues"
+  },
+  "homepage": "https://github.com/REPLACE_WITH_YOUR_USERNAME/dsh-session-trash#readme",
+  "engines": {
+    "node": ">=22.19.0",
+    "dsh": ">=0.2.0"
+  },
+  "scripts": {
+    "test": "node test/service.test.mjs && node test/host-e2e.test.mjs"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-slots"
+      ],
+      "platform": "web"
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "meta.title": "Session Trash",
+  "meta.description": "Recoverable session deletion: deleted sessions move to Trash, stay restorable for 7 days, then purge automatically.",
+  "menu.delete": "Delete session",
+  "panel.title": "Trash"
+}

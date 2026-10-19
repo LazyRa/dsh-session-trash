@@ -1,0 +1,10 @@
+# Normalize line endings: store LF in the repository,
+# check out the platform default in working copies.
+* text=auto eol=lf
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary

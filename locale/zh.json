@@ -1,0 +1,6 @@
+{
+  "meta.title": "会话回收站",
+  "meta.description": "可恢复的会话删除：删除的会话移入回收站，7 天内随时恢复，到期自动清理。",
+  "menu.delete": "删除会话",
+  "panel.title": "回收站"
+}
