@@ -1,6 +1,6 @@
 {
   "name": "@lazyra/dsh-session-trash",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Recoverable session deletion for DeepSeek Harness: move sessions to a trash folder, restore them from a UI page, and purge automatically after 7 days.",
   "type": "module",
   "main": "lib/index.js",
