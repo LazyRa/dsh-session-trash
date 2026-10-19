@@ -20,7 +20,9 @@ async function t(name, fn) {
 
 // ---------- projectKey ----------
 
-await t('projectKey 与真实目录名一致', () => {
+await t('projectKey 与 DSH 编码规则一致（含中文路径）', () => {
+  // 期望值按 DSH 源码 projectKey() 推导：分隔符合并成一个 '-'，
+  // 非安全字符编成 ~XXXX 大写十六进制。用中文覆盖该分支。
   assert.equal(projectKey('D:\\demo\\日常'), '--D-demo-~65E5~5E38--')
 })
 
