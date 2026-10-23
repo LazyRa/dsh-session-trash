@@ -98,6 +98,32 @@ dsh plugin --profile desktop add /path/to/dsh-session-trash
 > [!TIP]
 > 安装后需要**重启 DSH** 才会生效。如果侧栏没出现「回收站」，检查插件是否已启用。
 
+### 升级到新版本
+
+pnpm 默认带 `minimumReleaseAge` —— **发布不满 24 小时的包会被静默跳过**。
+所以插件发新版后，`pnpm update` 可能悄悄停在旧版本，看起来像没生效。
+
+在 profile 的 `pnpm-workspace.yaml` 里放行一次即可：
+
+```yaml
+minimumReleaseAgeExclude:
+  - '@lazyra/dsh-session-trash@0.1.1 || 0.1.2'
+```
+
+然后：
+
+```bash
+pnpm update @lazyra/dsh-session-trash --latest
+```
+
+确认版本：
+
+```bash
+node -e "console.log(require('./node_modules/@lazyra/dsh-session-trash/package.json').version)"
+```
+
+> 之后每次发新版，把新的版本号补进 `||` 后面即可。
+
 ## 📖 使用
 
 ### 删除会话
@@ -318,6 +344,30 @@ sequenceDiagram
 <summary><b>数据存在哪里？可以手动备份吗？</b></summary>
 
 回收站在 `<DSH_HOME>/trash/` 下，每个条目是一个独立目录，直接复制走就行。
+</details>
+
+<details>
+<summary><b>装了新版却没生效？</b></summary>
+
+多半是 pnpm 的 `minimumReleaseAge` 把新版本跳过了（发布不满 24 小时会被静默拒绝）。
+在 profile 的 `pnpm-workspace.yaml` 里加一行放行：
+
+```yaml
+minimumReleaseAgeExclude:
+  - '@lazyra/dsh-session-trash@0.1.1 || 0.1.2'
+```
+
+然后 `pnpm update @lazyra/dsh-session-trash --latest` 并重启 DSH。详见[升级到新版本](#升级到新版本)。
+</details>
+
+<details>
+<summary><b>删掉的会话又出现在「未分组」里？</b></summary>
+
+那是 0.1.2 之前的旧版本的行为：插件只把会话目录移进回收站，没让 DSH 彻底不再列出它，
+下一次拉列表时它就回来了（又不属于任何工作区，于是归到「未分组」）。
+
+0.1.2 起删除时会把会话留在归档集合里（DSH 判定会话不可见的官方机制），恢复时才撤销。
+升级到 0.1.2 即可。
 </details>
 
 ## 🧑‍💻 开发
