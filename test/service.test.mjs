@@ -102,14 +102,18 @@ await t('moveToTrash 把投影缓存移出原位置', async () => {
   await assert.rejects(fs.access(f), '原位置应已移走')
 })
 
-await t('moveToTrash 从注册表移除成员/归档/置顶', async () => {
+await t('moveToTrash 从注册表移除成员，并保留归档状态', async () => {
   const reg = JSON.parse(await fs.readFile(path.join(home, 'storages', 'workspace.json'), 'utf8'))
   const ws = reg.tables.workspaces[WS_ID]
   assert.ok(!ws.sessionIds.includes(S1), '成员关系应移除')
   assert.ok(ws.sessionIds.includes(S2), '其他会话应保留')
   // S1 原在 pinnedSessionIds，S2 原在 archivedSessionIds
   assert.ok(!reg.global.pinnedSessionIds.includes(S1), '置顶应移除')
-  assert.ok(!reg.global.archivedSessionIds.includes(S1), '归档集合不含 S1')
+  // 关键：S1 必须留在归档集合里。
+  // DSH 的会话语料是「落盘 ∪ 活会话」，插件只清掉了落盘那一半；
+  // 客户端用归档集合判定可见性（sessionVisible -> !archived.has(id)），
+  // 不归档的话，被删的会话下次拉列表就会回到「未分组」。
+  assert.ok(reg.global.archivedSessionIds.includes(S1), 'S1 应留在归档集合里（隐藏它）')
   assert.ok(reg.global.archivedSessionIds.includes(S2), 'S2 的归档状态不受影响')
 })
 
@@ -133,6 +137,9 @@ await t('restore 还原目录、清 meta、恢复注册表', async () => {
 
   const reg = JSON.parse(await fs.readFile(path.join(home, 'storages', 'workspace.json'), 'utf8'))
   assert.ok(reg.tables.workspaces[WS_ID].sessionIds.includes(S1), '应恢复成员关系')
+  // 恢复时必须撤销归档：会话在回收站期间一直留在归档集合里（那是让它不出现在
+  // 侧栏的机制），不撤掉的话会话回来了却仍然不可见。
+  assert.ok(!reg.global.archivedSessionIds.includes(S1), '恢复后应撤销归档')
 })
 
 await t('restore 不把 meta.json 留在会话目录', async () => {
@@ -337,9 +344,9 @@ await t('readSessionHeader 支持未压缩的 .jsonl', async () => {
 await t('会话仍在运行时 moveToTrash 抛 SESSION_ACTIVE', async () => {
   await seed([S1])
   const svc = new TrashService({ home, logger: log })
-  svc.setRegistry({
-    get: () => ({}),
-    checkArchive: async () => ({ active: true, families: ['turn', 'job'] }),
+  // 活动探针走注入的 hook（Host 侧接的是 DSH 的 workspace/session-activity waterfall）
+  svc.setActivity({
+    probe: async () => [{ kind: 'turn' }, { kind: 'job' }],
   })
   await assert.rejects(svc.moveToTrash(S1), (e) => {
     assert.equal(e.code, 'SESSION_ACTIVE')
@@ -350,16 +357,46 @@ await t('会话仍在运行时 moveToTrash 抛 SESSION_ACTIVE', async () => {
   assert.ok(await fs.stat(path.join(home, 'sessions', KEY, S1)).catch(() => null))
 })
 
+await t('注册表的归档准入才是权威（探针没探到也要拦住）', async () => {
+  await seed([S1])
+  const svc = new TrashService({ home, logger: log })
+  // 探针说「不活跃」，但注册表的 archiveSession 说「活跃」——
+  // 后者才是 DSH 的权威口径，必须以它为准。
+  svc.setActivity({ probe: async () => [] })
+  svc.setRegistry({
+    archiveSession: async () => {
+      const err = new Error('cannot archive session: the session is active (turn)')
+      err.name = 'WorkspaceActiveSessionError'
+      err.activity = [{ kind: 'turn' }]
+      throw err
+    },
+  })
+  await assert.rejects(svc.moveToTrash(S1), (e) => {
+    assert.equal(e.code, 'SESSION_ACTIVE')
+    assert.deepEqual(e.families, ['turn'])
+    return true
+  })
+  assert.ok(await fs.stat(path.join(home, 'sessions', KEY, S1)).catch(() => null), '会话应仍在原位')
+})
+
 await t('带 stopActivity 时会先停止再删除', async () => {
   await seed([S1])
   const calls = []
   const svc = new TrashService({ home, logger: log })
+  svc.setActivity({
+    probe: async () => [{ kind: 'turn' }],
+    stop: async (id) => calls.push(['stop', id]),
+  })
+  const archived = []
   svc.setRegistry({
-    get: () => ({}),
-    checkArchive: async () => ({ active: true, families: ['turn'] }),
-    stopSessionActivity: async (id) => calls.push(['stop', id]),
+    // 官方语义：stopActivity 为 true 时不做准入检查，直接归档并请求停止
+    archiveSession: async (id, options) => {
+      archived.push([id, options?.stopActivity === true])
+      if (options?.stopActivity === true) await calls.push(['stop', id])
+    },
   })
   await svc.moveToTrash(S1, { stopActivity: true })
+  assert.deepEqual(archived, [[S1, true]], '应调用 archiveSession 并带上 stopActivity')
   assert.deepEqual(calls, [['stop', S1]], '应先请求停止')
   assert.equal(await svc.locate(S1).catch(() => null), null, '会话应已移走')
 })
@@ -433,6 +470,9 @@ await t('接入 registry 后，删除走 API 而不是写文件', async () => {
         },
       }
     },
+    async archiveSession(sid, options) {
+      calls.push(['archiveSession', sid, options?.stopActivity === true])
+    },
     async unarchiveSession(sid) {
       calls.push(['unarchiveSession', sid])
     },
@@ -452,10 +492,17 @@ await t('接入 registry 后，删除走 API 而不是写文件', async () => {
   const after = await fs.readFile(path.join(home, 'storages', 'workspace.json'), 'utf8')
 
   assert.ok(
+    calls.some(([m, s]) => m === 'archiveSession' && s === S1),
+    '应调用 archiveSession（隐藏会话的官方机制）',
+  )
+  assert.ok(
     calls.some(([m, s]) => m === 'detachSession' && s === S1),
     '应调用 detachSession',
   )
-  assert.ok(calls.some(([m]) => m === 'unarchiveSession'), '应调用 unarchiveSession')
+  assert.ok(
+    !calls.some(([m]) => m === 'unarchiveSession'),
+    '删除时不应撤销归档（那会让会话回到未分组）',
+  )
   assert.ok(calls.some(([m]) => m === 'unpinSession'), '应调用 unpinSession')
   assert.equal(before, after, '不应再直接写 workspace.json')
 })

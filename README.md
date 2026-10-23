@@ -184,8 +184,45 @@ dsh plugin --profile desktop add /path/to/dsh-session-trash
 | 位置 | 处理 | 不同步的后果 |
 |---|---|---|
 | `sessions/<key>/<id>/` | 移动到 `trash/` | 会话仍出现在侧栏 |
-| `storages/workspace.json` | 从成员/归档/置顶集合移除 | 会话掉进「未分组」 |
+| `storages/workspace.json` | 移出成员集合，**保留在归档集合里** | 会话掉进「未分组」（见下） |
 | `storages/session_projcache/` | 一并移入回收站 | 恢复后标题丢失 |
+
+### 为什么被删的会话必须「留在归档集合里」
+
+这是本插件最容易踩空的一处，也是「删完的会话又出现在未分组」的原因。
+
+DSH 的会话语料是**「落盘 ∪ 活会话」**：
+
+```js
+// session-query/src/corpus.ts
+const persisted = await listPersisted(persistence, signal)   // 磁盘上的会话
+for (const session of this._ctx.sessions.list()) {            // 内存里活着的会话
+  records.set(session.id, { ... })
+}
+```
+
+把目录移进回收站只清掉了「落盘」那一半。只要会话还活在 `ctx.sessions` 里
+（挂着 agent 的会话会一直活到它的生命周期结束），下一次拉取列表它就会回来；
+而插件已经把它移出了工作区，于是客户端把它归到**「未分组」**：
+
+```js
+// ui-workspace/src/client/tree.ts
+const stray = list.ids.filter((s) => !accounted.has(s.id) && sessionVisible(...))
+//                                              ↑ 不属于任何工作区 → 未分组
+```
+
+客户端判定可见性的官方口径是**归档集合**：
+
+```js
+// ui-workspace/src/client/tree.ts
+case 'default': return !archived.has(session.id)
+```
+
+所以插件在删除时做的是 **archive + detach**：归档（隐藏）＋ 摘掉工作区成员关系，
+并**保持归档状态不变**；直到恢复时才 `unarchiveSession` 撤销归档。
+
+> 早先的实现是在删除时把会话从归档集合里摘掉的，那正好等于「让它重新可见」——
+> 于是被删的会话在下一轮列表同步后回到「未分组」。
 
 ### 界面为什么能即时刷新
 
@@ -196,22 +233,36 @@ sequenceDiagram
     participant UI as 侧栏/面板
     participant Host as Host 插件
     participant FS as 文件系统
+    participant Reg as workspaceRegistry
 
     UI->>Host: POST /move
+    Host->>Reg: archiveSession（隐藏会话 + 活动准入）
     Host->>FS: rename 到 trash/
-    Host->>FS: 更新 workspace.json
+    Host->>Reg: detachSession（摘出工作区）
     Host-->>UI: api-session/removed
     Note over UI: 该行立即消失
 
     UI->>Host: POST /restore
     Host->>FS: rename 回原位
+    Host->>Reg: attachSession + unarchiveSession
     Host-->>UI: api-session/added (含标题投影)
     Note over UI: 该行立即出现，标题正确
 ```
 
+### 运行中的会话怎么拦
+
+用 DSH 官方的 `workspace/session-activity` waterfall 做准入检查，家族有
+`turn`（Agent 正在跑）、`job`（后台任务）、`subagent`（子会话）。
+有活动且用户没确认「停止并删除」时，删除会被拒绝并弹确认框；
+确认后走官方 `workspace/session-stop` 停止工作。
+
 ### 为什么不能用 `sessions.refresh()`
 
 恢复后如果调客户端 `refresh()` 整体重拉列表，会和 `api-session/removed` 写入的本地移除标记冲突，导致已永久删除的会话被重新捞出来、掉进「未分组」。所以恢复必须发**带完整 summary 的 `api-session/added`**。
+
+> 顺带一提：客户端的移除标记只活在**当前那一轮拉取**里。下一轮拉取会新建一个空的
+> 突变数组，旧的移除记录就丢了 —— 所以真正的修复必须落在服务端（归档），
+> 不能只靠一条通知。
 
 ### 附件不参与回收站
 
